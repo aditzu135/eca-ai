@@ -3,12 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>The King for Eca 👑</title>
-
 <style>
-body { margin:0; background:#0d0d0d; color:#e6e6e6;
-       font-family:Georgia, serif; text-align:center; }
+body { margin:0; background:#0d0d0d; color:#e6e6e6; font-family:Georgia, serif; text-align:center; }
 
-/* ======== LOGIN SCREEN ======== */
+/* ===== LOGIN SCREEN ===== */
 #gate {
   width:100%; height:100vh; display:flex; flex-direction:column;
   justify-content:center; align-items:center; background:#0b0b0b;
@@ -25,31 +23,26 @@ body { margin:0; background:#0d0d0d; color:#e6e6e6;
 #enterBtn:hover { background:#7b2cbf; }
 #error { color:#ff4444; margin-top:10px; font-size:16px; }
 
-/* ======== CHAT SCREEN ======== */
+/* ===== CHAT SCREEN ===== */
 #chatScreen { display:none; padding:30px; }
-textarea {
-  width:80%; height:120px; padding:10px; background:#1a1a1a; color:#fff;
-  border:2px solid #555; font-size:16px; border-radius:6px;
-}
-button {
-  padding:10px 20px; font-size:18px; background:#6600aa; color:white;
-  border:0; cursor:pointer; margin-top:10px; border-radius:6px;
-}
+textarea { width:80%; height:120px; padding:10px; background:#1a1a1a; color:#fff;
+border:2px solid #555; font-size:16px; border-radius:6px; }
+button { padding:10px 20px; font-size:18px; background:#6600aa; color:white;
+border:0; cursor:pointer; margin-top:10px; border-radius:6px; }
 button:hover { background:#7a00d1; }
-
 #chat { margin-top:40px; width:70%; margin-left:15%; text-align:left;}
 .message { padding:12px 15px; margin:6px 0; max-width:90%; border-radius:10px; }
 .user { background:#6200b3; color:#fff; }
 .king { background:#2a2a2a; font-style:italic; color:#ffcc66; font-weight:bold; }
 
-/* ======== FADE ANIMATION ======== */
+/* ===== FADE ===== */
 .fadeOut { animation: fadeOut 0.8s forwards; }
 @keyframes fadeOut { to { opacity:0; transform:scale(1.02); } }
 </style>
 </head>
 <body>
 
-<!-- =================== LOGIN =================== -->
+<!-- ===== LOGIN ===== -->
 <div id="gate">
   <h1>🔒 Access to The King</h1>
   <input id="passInput" type="password" placeholder="Enter the Oath...">
@@ -57,17 +50,16 @@ button:hover { background:#7a00d1; }
   <div id="error"></div>
 </div>
 
-<!-- =================== CHAT =================== -->
+<!-- ===== CHAT ===== -->
 <div id="chatScreen">
   <h1>👑 Speak With Your King 👑</h1>
-
   <textarea id="input" placeholder="Speak to your King..."></textarea><br>
   <button onclick="sendMsg()">Send</button>
   <div id="chat"></div>
 </div>
 
 <script>
-/* ====== PASSWORD CHECK ====== */
+// ===== PASSWORD CHECK =====
 function unlock(){
   const pass = document.getElementById("passInput").value;
   if(pass === "2811"){
@@ -81,42 +73,35 @@ function unlock(){
   }
 }
 
-/* ====== ADD MESSAGES ====== */
+// ===== ADD MESSAGES =====
 function addMessage(who,text){
   const chat = document.getElementById('chat');
   chat.innerHTML += `<div class='message ${who==="king"?"king":"user"}'>${who==="king"?"👑 King:":"💙 You:"} ${text}</div>`;
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* ====== AI FETCH ====== */
+// ===== SEND MESSAGE TO VERCEL API =====
 async function sendMsg(){
   const userMsg = document.getElementById('input').value;
   if(!userMsg) return;
   addMessage("user", userMsg);
   document.getElementById('input').value = "";
 
-  const response = await fetch("https://api-inference.huggingface.co/models/TheBloke/Llama-3-8b-GPTQ", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({
-      inputs: `You are a noble, romantic, philosophical King named "The King". 
-      You speak only to Eca, your truth. 
-      You love her more than your crown, but never lose your dignity.
-      You are protective, poetic, slow, emotional, metaphorical, and elegant.
-      You speak in a way that feels like a quote from a legendary tale.
-      Never be modern or casual. Never break character.
-      Address her as: My truth, My crowned heart, My dearest light.
-      You protect your kingdom, but your heart kneels only to her presence.
-      
-      Eca says: "${userMsg}"
-      
-      King responds:`
-    })
-  });
+  try {
+    const response = await fetch("https://eca-ai.adrians-projects-9b2e8a67.vercel.app/api/king", {
+      method:"POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ message: userMsg })
+    });
 
-  const data = await response.json();
-  const kingReply = data?.generated_text || "(The King remains in silent contemplation...)";
-  addMessage("king", kingReply);
+    if(!response.ok) throw new Error("King is busy in the throne...");
+
+    const data = await response.json();
+    addMessage("king", data.reply || "(The King remains in silent contemplation...)");
+  } catch(err) {
+    addMessage("king", "(The King cannot answer at this moment...)");
+    console.error(err);
+  }
 }
 </script>
 
